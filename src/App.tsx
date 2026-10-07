@@ -6,8 +6,9 @@ import { Dashboard, ConsentModal, RubricBars, CameraView, MicMeter, DevicePicker
 
 
 // API configuration
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3001'
-const SPEECH_LANG = (import.meta as any).env?.VITE_SPEECH_LANG || 'en-US'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+console.log("API_URL =", API_URL)
+const SPEECH_LANG = import.meta.env.VITE_SPEECH_LANG || 'en-US'
 
 const getAuthHeaders = (): Record<string, string> => {
   const token = sessionStorage.getItem('authToken')

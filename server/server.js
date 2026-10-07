@@ -1,6 +1,4 @@
 import dotenv from 'dotenv'
-// In development the .env file wins over stale system variables; in production the host's real env vars win.
-dotenv.config({ override: process.env.NODE_ENV !== 'production' })
 import express from 'express'
 import sqlite3 from 'sqlite3'
 import cors from 'cors'
@@ -13,6 +11,12 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+dotenv.config({
+  path: path.join(__dirname, '.env'),
+  override: process.env.NODE_ENV !== 'production'
+})
+
 const { JWT_SECRET, GEMINI_API_KEY } = process.env
 console.log('Gemini key:', GEMINI_API_KEY ? `loaded (length ${GEMINI_API_KEY.length})` : 'MISSING - AI runs in demo mode')
 if (!JWT_SECRET || JWT_SECRET.length < 32) throw new Error('JWT_SECRET missing or shorter than 32 chars')
@@ -37,6 +41,7 @@ app.use(helmet())
 app.use(compression())
 const allowedOrigins = [
   'http://localhost:5173',
+  'http://localhost:3001',
   'https://ai-interview-couch.netlify.app'
 ]
 
@@ -371,12 +376,43 @@ app.post('/api/parse-resume', authenticateToken, (req, res) => {
 app.get('/api/health', (req, res) => res.json({ status: 'Server is running' }))
 
 // ---------- errors ----------
-app.use((req, res) => res.status(404).json({ error: 'Not found' }))
-app.use((err, req, res, next) => {
-  if (err.type === 'entity.too.large') return res.status(413).json({ error: 'Request too large' })
-  if (err.type === 'entity.parse.failed') return res.status(400).json({ error: 'Invalid JSON' })
-  if (!err.publicMessage) console.error(err.message)
-  res.status(err.status || 500).json({ error: err.publicMessage || 'Server error' })
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'Server is running' })
 })
 
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`))
+const frontendPath = path.join(__dirname, '..', 'dist')
+
+app.use(express.static(frontendPath))
+
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/')) {
+    return next()
+  }
+
+  res.sendFile(path.join(frontendPath, 'index.html'))
+})
+
+// ---------- errors ----------
+app.use((req, res) => res.status(404).json({ error: 'Not found' }))
+
+app.use((err, req, res, next) => {
+  if (err.type === 'entity.too.large') {
+    return res.status(413).json({ error: 'Request too large' })
+  }
+
+  if (err.type === 'entity.parse.failed') {
+    return res.status(400).json({ error: 'Invalid JSON' })
+  }
+
+  if (!err.publicMessage) console.error(err.message)
+
+  res.status(err.status || 500).json({
+    error: err.publicMessage || 'Server error'
+  })
+})
+
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`)
+})
+
+
