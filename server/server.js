@@ -42,8 +42,9 @@ app.use(compression())
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3001',
-  'https://ai-interview-couch.netlify.app'
-]
+  'https://ai-interview-couch.netlify.app',
+  FRONTEND_URL
+].filter(Boolean)
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -373,27 +374,36 @@ app.post('/api/parse-resume', authenticateToken, (req, res) => {
   res.json({ detectedTechnologies, suggestedQuestions })
 })
 
-app.get('/api/health', (req, res) => res.json({ status: 'Server is running' }))
 
 // ---------- errors ----------
 app.get('/api/health', (req, res) => {
   res.json({ status: 'Server is running' })
 })
 
+// ---------- frontend ----------
 const frontendPath = path.join(__dirname, '..', 'dist')
 
+// Serve React/Vite static files
 app.use(express.static(frontendPath))
 
+// React SPA fallback
 app.use((req, res, next) => {
   if (req.path.startsWith('/api/')) {
     return next()
+  }
+
+  // Let missing asset requests return 404 instead of index.html
+  if (req.path.startsWith('/assets/')) {
+    return res.status(404).end()
   }
 
   res.sendFile(path.join(frontendPath, 'index.html'))
 })
 
 // ---------- errors ----------
-app.use((req, res) => res.status(404).json({ error: 'Not found' }))
+app.use((req, res) => {
+  res.status(404).json({ error: 'Not found' })
+})
 
 app.use((err, req, res, next) => {
   if (err.type === 'entity.too.large') {
@@ -412,7 +422,6 @@ app.use((err, req, res, next) => {
 })
 
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`)
+  console.log(`Server running at http://localhost:${PORT}`)
 })
-
 
