@@ -35,7 +35,14 @@ const app = express()
 if (process.env.TRUST_PROXY) app.set('trust proxy', 1)
 app.use(helmet())
 app.use(compression())
-app.use(cors({ origin: FRONTEND_URL }))
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://ai-interview-couch.netlify.app'
+]
+
+app.use(cors({
+  origin: allowedOrigins
+}))
 const smallJson = express.json({ limit: '100kb' })
 const audioJson = express.json({ limit: '3mb' }) // only for /api/transcribe
 app.use((req, res, next) => (req.path === '/api/transcribe' ? next() : smallJson(req, res, next)))
