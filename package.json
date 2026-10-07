@@ -19,6 +19,7 @@
     "start:all": "vite build && concurrently -n server,web -c blue,green \"npm run start:server\" \"vite preview\""
   },
   "dependencies": {
+    "cors": "^2.8.6",
     "dotenv": "^18.0.6",
     "express": "^5.2.1",
     "react": "^18.2.0",
