@@ -6,7 +6,7 @@ import { Dashboard, ConsentModal, RubricBars, CameraView, MicMeter, DevicePicker
 
 
 // API configuration
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const API_URL = import.meta.env.VITE_API_URL || ''
 console.log("API_URL =", API_URL)
 const SPEECH_LANG = import.meta.env.VITE_SPEECH_LANG || 'en-US'
 
